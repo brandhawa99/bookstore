@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 import app from "./firebase-config";
 import { getFirestore } from "firebase/firestore";
-import { collection, addDoc } from "firebase/firestore";
-
-function Form({ user, open }) {
+import { collection, addDoc, Timestamp } from "firebase/firestore";
+import { useSelector, useDispatch } from "react-redux";
+import { toggle } from "./openFormSlice";
+function Form({ user }) {
   /**
    * used to store the values of the inputs
    */
@@ -11,6 +12,8 @@ function Form({ user, open }) {
   const [bookAuthour, setBookAuthor] = useState("");
   const [bookRead, setBookRead] = useState(false);
   const db = getFirestore(app);
+  const open = useSelector((state) => state.openForm.value);
+  const dispatch = useDispatch();
   /**
    * on submit get the data from the form and use it to create a doc
    * and submit it to the database
@@ -25,18 +28,20 @@ function Form({ user, open }) {
         title: bookTitle,
         author: bookAuthour,
         read: bookRead,
+        timestamp: Timestamp.now(),
       });
       console.log("Document written with ID: ", docRef.id);
       setBookTitle("");
       setBookAuthor("");
       setBookRead(false);
+      dispatch(toggle());
     } catch (error) {
       console.log(error);
     }
   };
 
   return (
-    !open && (
+    open && (
       /**
        * if open is ture display the form
        * otherwise go into hiding
@@ -52,21 +57,34 @@ function Form({ user, open }) {
               : "hidden"
           }
         >
-          <label
-            for="default-toggle"
-            class="inline-flex relative items-center cursor-pointer"
+          <div
+            onClick={() => dispatch(toggle())}
+            className="w-100 flex self-start cursor-pointer hover:bg-red-400 px-2 py-1 rounded text-red-600"
           >
+            &#10005;
+          </div>
+          <label className="inline-flex relative items-center cursor-pointer">
+            {/**
+             * Input for read status of the book
+             */}
             <input
               type="checkbox"
-              value=""
+              value={bookRead}
+              name="bookread"
               id="default-toggle"
-              class="sr-only peer"
+              onClick={() => {
+                setBookRead(!bookRead);
+              }}
+              className="sr-only peer"
             />
-            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-            <span class="ml-3 text-sm font-medium text-gray-900 dark:text-gray-300">
+            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+            <span className="ml-3 text-sm font-medium text-gray-900 dark:text-gray-300">
               Completed
             </span>
           </label>
+          {/**
+           * Input for title of book
+           */}
           <div className="flex justify-center">
             <input
               placeholder={"Title"}
@@ -78,6 +96,9 @@ function Form({ user, open }) {
               required
             />
           </div>
+          {/**
+           * input for author of book
+           */}
           <div className="flex justify-center">
             <input
               className="px-2 rounded"
